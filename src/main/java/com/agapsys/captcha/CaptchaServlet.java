@@ -34,11 +34,12 @@ public final class CaptchaServlet extends HttpServlet {
 	 * Generates a token an stores in session
 	 * @param request request
 	 */
-	private static void generateToken(HttpServletRequest request) {
+	private static String generateToken(HttpServletRequest request) {
 		HttpSession session = request.getSession();
 		
 		String token = CAGE.getTokenGenerator().next();
 		session.setAttribute(ATR_SESSION_TOKEN, token);
+		return token;
 	}
 
 	/**
@@ -72,7 +73,7 @@ public final class CaptchaServlet extends HttpServlet {
 		if (!req.getMethod().equals("GET")) {
 			resp.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
 		} else {
-			String token = getToken(req);
+			String token = generateToken(req);
 
 			resp.setContentType("image/" + CAGE.getFormat());
 			resp.setHeader("Cache-Control", "no-cache, no-store");
