@@ -60,7 +60,7 @@ public final class CaptchaServlet extends HttpServlet {
 	 */
 	public static boolean checkToken(HttpServletRequest request, String token) throws IllegalArgumentException {
 		if (token == null || token.isEmpty())
-			throw new IllegalArgumentException("Null/Empty token");
+			return false;
 		
 		return token.equals(getToken(request));
 	}
