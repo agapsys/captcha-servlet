@@ -3,7 +3,7 @@ Agapsys Captcha Servlet
 
 Welcome to the Captcha Servlet project.
 
-Attention: If you obtained the source from a snapshot branch be aware that 
+Attention: If you obtained the source from a 'snapshot' branch be aware that 
 such branch can contain unstable code or even uncompilable code.
 
 Compiling
@@ -15,8 +15,9 @@ dependencies.
 Dependencies
 ------------
 
-Web Security Framework requires Java 7 compatible runtime and
-depends on the following external libraries:
+Captcha Servlet project requires Java(TM) EE 7 Web Specification APIs (usually
+provided by a servlet container) and depends on the following external 
+libraries:
 
 * CAptcha GEnerator (available at
   http://akiraly.github.com/cage)
