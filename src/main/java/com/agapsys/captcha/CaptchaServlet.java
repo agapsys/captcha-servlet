@@ -24,56 +24,81 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-public final class CaptchaServlet extends HttpServlet {
+public class CaptchaServlet extends HttpServlet {
 
 	// CLASS SCOPE =============================================================
 	private static final Cage CAGE = new GCage();
 	private static final String ATR_SESSION_TOKEN = "com.agapsys.captcha.token";
-
-	/**
-	 * Generates a token an stores in session
-	 * @param request request
-	 */
-	private static String generateToken(HttpServletRequest request) {
-		HttpSession session = request.getSession();
-		
-		String token = CAGE.getTokenGenerator().next();
-		session.setAttribute(ATR_SESSION_TOKEN, token);
-		return token;
-	}
-
-	/**
-	 * @return Token stored in session
-	 * @param request request
-	 */
-	private static String getToken(HttpServletRequest request) {
-		HttpSession session = request.getSession();
-		String token = (String) session.getAttribute(ATR_SESSION_TOKEN);
-		return token;
-	}
+	private static final Object INIT_MUTEX = new Object();
 	
-	/**
-	 * Check if given token is valid
-	 * @param request request
-	 * @param token token to be tested
-	 * @return check result
-	 */
-	public static boolean checkToken(HttpServletRequest request, String token) throws IllegalArgumentException {
-		if (token == null || token.isEmpty())
-			return false;
-		
-		return token.equals(getToken(request));
+	private static CaptchaServlet instance = null;
+	
+	public static CaptchaServlet getInstance() {
+		synchronized(INIT_MUTEX) {
+			if (instance == null)
+				throw new IllegalStateException("Servlet was not initialized yet");
+			
+			return instance;
+		}
 	}
-		
 	// =========================================================================
 
 	// INSTANCE SCOPE ==========================================================
+	/**
+	 * Tests given token against stored one.
+	 * @param req request used to retrieve stored cookie
+	 * @param token token to be tested
+	 * @return a boolean indicating if given token is valid.
+	 */
+	public final boolean isValid(HttpServletRequest req, String token) {
+		String storedToken = getStoredToken(req);
+		
+		if (storedToken == null)
+			return false;
+		
+		return storedToken.equals(token);
+	}
+	
+	/**
+	 * Associates a token with an user.
+	 * Default implementation stores the token into user session.
+	 * @param req HTTP request
+	 * @param resp HTTP response
+	 * @param token token to be associated with an user.
+	 */
+	protected void store(HttpServletRequest req, HttpServletResponse resp, String token) {
+		HttpSession session = req.getSession();
+		session.setAttribute(ATR_SESSION_TOKEN, token);
+	}
+	
+	/**
+	 * Returns the token previously associated with given request.
+	 * Default implementation retrieves the token from user session.
+	 * @param req HTTP request
+	 * @return associated token
+	 */
+	protected String getStoredToken(HttpServletRequest req) {
+		HttpSession session = req.getSession(false);
+		
+		if (session == null)
+			return null;
+		
+		return (String) session.getAttribute(ATR_SESSION_TOKEN);
+	}
+	
+	
 	@Override
-	protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+	protected final void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		synchronized (INIT_MUTEX) {
+			if (instance == null)
+				instance = this;
+		}
+		
 		if (!req.getMethod().equals("GET")) {
 			resp.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
 		} else {
-			String token = generateToken(req);
+			String token = CAGE.getTokenGenerator().next();
+			store(req, resp, token);
 
 			resp.setContentType("image/" + CAGE.getFormat());
 			resp.setHeader("Cache-Control", "no-cache, no-store");
