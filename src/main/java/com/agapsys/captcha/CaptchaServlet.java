@@ -86,6 +86,9 @@ public class CaptchaServlet extends HttpServlet {
 		return (String) session.getAttribute(ATR_SESSION_TOKEN);
 	}
 	
+	protected Cage getCage() {
+		return CAGE;
+	}
 	
 	@Override
 	protected final void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -97,10 +100,10 @@ public class CaptchaServlet extends HttpServlet {
 		if (!req.getMethod().equals("GET")) {
 			resp.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
 		} else {
-			String token = CAGE.getTokenGenerator().next();
+			String token = getCage().getTokenGenerator().next();
 			store(req, resp, token);
 
-			resp.setContentType("image/" + CAGE.getFormat());
+			resp.setContentType("image/" + getCage().getFormat());
 			resp.setHeader("Cache-Control", "no-cache, no-store");
 			resp.setHeader("Pragma", "no-cache");
 			long time = System.currentTimeMillis();
